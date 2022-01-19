@@ -225,6 +225,12 @@ private:
 				std::vector<std::string> Field9;
 				boost::split(fields, result.data, boost::algorithm::is_any_of("D"));
 
+				// if fields is empty (or only "+"), seg fault can occur do to memory violation.
+				if (fields.size() < 2) {
+					ROS_INFO_STREAM("Error reading data; configuration incorrect");
+					ROS_INFO_STREAM(result.data.c_str());
+					continue; // return to loop and try again
+				}
 				std::vector<std::string> fields_H;
 				boost::split(fields_H, fields[1], boost::algorithm::is_any_of("?"));
 
