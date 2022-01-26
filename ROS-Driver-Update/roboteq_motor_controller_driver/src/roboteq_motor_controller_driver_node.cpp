@@ -255,7 +255,7 @@ private:
 		// Test here
 		read_publisher = nh.advertise<std_msgs::String>("read", 1000);
 		diagnostic_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>("machine/diagnostics", 1000);
-		sleep(2);
+		/*sleep(2);
 		ros::spinOnce();
 		sleep(2);
 
@@ -271,7 +271,7 @@ private:
 		diagnostic_pub.publish(fault_msg);
 		sleep(2);
 		ros::spinOnce();
-		sleep(2);
+		sleep(2);*/
 
 
 		ser.write(ss0.str());
