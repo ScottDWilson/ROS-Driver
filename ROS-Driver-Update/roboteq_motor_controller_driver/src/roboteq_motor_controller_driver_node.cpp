@@ -67,6 +67,28 @@ private:
 		connect();
 	}
 
+	int bitwise_parse(int input){
+		if (input & 1) {
+			return 1;
+		} else if (input & 2) {
+			return 2;
+		} else if (input & 4) {
+			return 3;
+		} else if (input & 8) {
+			return 4;
+		} else if (input & 16) {
+			return 5;
+		} else if (input & 32) {
+			return 6;
+		} else if (input & 64) {
+			return 7;
+		} else if (input & 128) {
+			return 8;
+		} else {
+			return 0;
+		}
+	}
+
 	void connect()
 	{
 
@@ -233,8 +255,11 @@ private:
 		// Test here
 		read_publisher = nh.advertise<std_msgs::String>("read", 1000);
 		diagnostic_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>("machine/diagnostics", 1000);
+		sleep(2);
+		ros::spinOnce();
+		sleep(2);
 
-		int fault_code = 2;
+		int fault_code = bitwise_parse(22);
 		diagnostic_msgs::DiagnosticStatus fault_msg;
 		fault_msg.level = 2;
 		fault_msg.name = "Roboteq: " + name_;
@@ -243,6 +268,11 @@ private:
     temp.key = "Fault Code";
     temp.value = std::to_string(fault_code);
     fault_msg.values.push_back(temp);
+		diagnostic_pub.publish(fault_msg);
+		sleep(2);
+		ros::spinOnce();
+		sleep(2);
+
 
 		ser.write(ss0.str());
 		ser.write(ss1.str());
@@ -315,9 +345,19 @@ private:
 
 						// Check if fault flag; and send to diagnostics
 						if (i == fault_iter) {
-							diagnostic_msgs::DiagnosticStatus fault_msg;
-							fault_msg.level = 2;
-							fault_msg.name = "Fault: " + name_;
+							int fault_code = bitwise_parse(Q1.value[0]); // first value is fault code; stored as bit wise
+							if ((fault_code > 0) && (fault_code < 9)) { // data sanity check
+								ROS_INFO_STREAM("Fault detected;");
+								diagnostic_msgs::DiagnosticStatus fault_msg;
+								fault_msg.level = 2;
+								fault_msg.name = "Roboteq: " + name_;
+								fault_msg.message = Fault_Desc[fault_code - 1]; // Index starts at 0; check above prevents accidental seg fault with poor data
+								diagnostic_msgs::KeyValue temp;
+						    temp.key = "Fault Code";
+						    temp.value = std::to_string(fault_code);
+						    fault_msg.values.push_back(temp);
+								diagnostic_pub.publish(fault_msg);
+							}
 						}
 					}
 				}
