@@ -1,0 +1,8 @@
+1 : Overheat
+2 : Overvoltage
+3 : Undervoltage
+4 : Short circuit
+5 : Emergency stop
+6 : Motor/Sensor Setup fault
+7 : MOSFET failure
+8 : Default configuration loaded at startup

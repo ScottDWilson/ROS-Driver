@@ -1,29 +1,39 @@
 port : "/dev/ttyACM0"
 baud : 115200
+name : "Left_Motor"
 
 frequencyH : 50   #higher frequency (value is in ms)
 
 queryH:
- motor_amps : ?A 
+ motor_amps : ?A
  motor_command : ?M
  hall_count : ?Cb
  hall_speed : ?BS
  volts : ?V
- feedback : ?F 
+ feedback : ?F
  battery_amps : ?BA
- power : ?P          
- fault_flag : ?FF  
+ power : ?P
+ fault_flag : ?FF
 # motor_amps2 : ?MA
 # motor_command2 : ?FM
 # hall_count2 : ?FM
 # hall_speed2 : ?FS
 # volts2 : ?V
-# feedback2 : ?rmp 
+# feedback2 : ?rmp
 # battery_amps2 : ?PHA
-# power2 : ?sns          
-# fault_flag2 : ?S  
+# power2 : ?sns
+# fault_flag2 : ?S
 # status_flag : ?FS
-# firmware_id : ?FID  
+# firmware_id : ?FID
 # encoder_count : ?C
-# encoder_speed : ?S  
+# encoder_speed : ?S
 
+fault_list:
+  f1 : Overheat
+  f2 : Overvoltage
+  f3 : Undervoltage
+  f4 : Short circuit
+  f5 : Emergency stop
+  f6 : Motor/Sensor Setup fault
+  f7 : MOSFET failure
+  f8 : Default configuration loaded at startup

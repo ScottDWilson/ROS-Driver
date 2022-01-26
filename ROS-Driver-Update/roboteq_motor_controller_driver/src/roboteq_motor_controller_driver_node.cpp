@@ -15,10 +15,15 @@
 #include <roboteq_motor_controller_driver/querylist.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <diagnostic_msgs/KeyValue.h>
 #include <roboteq_motor_controller_driver/channel_values.h>
 #include <roboteq_motor_controller_driver/config_srv.h>
 #include <roboteq_motor_controller_driver/command_srv.h>
 #include <roboteq_motor_controller_driver/maintenance_srv.h>
+
+#include <stdlib.h>
+#include <stdio.h>
 
 class RoboteqDriver
 {
@@ -39,8 +44,10 @@ public:
 private:
 	serial::Serial ser;
 	std::string port;
+	std::string name_;
 	int32_t baud;
 	ros::Publisher read_publisher;
+	ros::Publisher diagnostic_pub;
 	ros::Subscriber cmd_vel_sub;
 
 	int channel_number_1;
@@ -151,9 +158,10 @@ private:
 	void initialize_services()
 	{
 		n = ros::NodeHandle();
-		configsrv = n.advertiseService("config_service", &RoboteqDriver::configservice, this);
-		commandsrv = n.advertiseService("command_service", &RoboteqDriver::commandservice, this);
-		maintenancesrv = n.advertiseService("maintenance_service", &RoboteqDriver::maintenanceservice, this);
+		//ros::NodeHandle nh_priv("~");
+		configsrv = n.advertiseService("/config_service", &RoboteqDriver::configservice, this);
+		commandsrv = n.advertiseService("/command_service", &RoboteqDriver::commandservice, this);
+		maintenancesrv = n.advertiseService("/maintenance_service", &RoboteqDriver::maintenanceservice, this);
 	}
 
 	void run()
@@ -165,10 +173,14 @@ private:
 		nh.getParam("frequencyL", frequencyL);
 		nh.getParam("frequencyG", frequencyG);
 
+		nh.getParam("name",name_);
+
 		typedef std::string Key;
 		typedef std::string Val;
 		std::map<Key, Val> map_sH;
 		nh.getParam("queryH", map_sH);
+		std::map<Key, Val> fault_map;
+		nh.getParam("fault_list", fault_map);
 
 		std::stringstream ss0;
 		std::stringstream ss1;
@@ -176,17 +188,25 @@ private:
 		std::stringstream ss3;
 		std::vector<std::string> KH_vector;
 
+		int fault_iter = 0;
+
+		// Create command for roboteq to send readings at set frequency
 		ss0 << "^echof 1_";
 		ss1 << "# c_/\"DH?\",\"?\"";
+		int counter = 0; // Not sure how iterator works just yet
 		for (std::map<Key, Val>::iterator iter = map_sH.begin(); iter != map_sH.end(); ++iter)
 		{
 			Key KH = iter->first;
-
 			KH_vector.push_back(KH);
 
 			Val VH = iter->second;
-
+			if (VH.compare("?FF")==0){
+				fault_iter = counter;
+				ROS_INFO("Fault flag found: %d", fault_iter);
+				ROS_INFO(VH.c_str());
+			}
 			ss1 << VH << "_";
+			counter++;
 		}
 		ss1 << "# " << frequencyH << "_";
 
@@ -196,6 +216,34 @@ private:
 			publisherVecH.push_back(nh.advertise<roboteq_motor_controller_driver::channel_values>(KH_vector[i], 100));
 		}
 
+		// Load fault list into system
+		std::vector<std::string> Fault_vector;
+		std::vector<std::string> Fault_Desc;
+		for (std::map<Key, Val>::iterator iter = fault_map.begin(); iter != fault_map.end(); ++iter)
+		{
+			Key KH = iter->first;
+
+			Fault_vector.push_back(KH);
+
+			Val VH = iter->second;
+			Fault_Desc.push_back(VH); // Index corresponds to fault code
+			//ss1 << VH << "_";
+		}
+
+		// Test here
+		read_publisher = nh.advertise<std_msgs::String>("read", 1000);
+		diagnostic_pub = nh.advertise<diagnostic_msgs::DiagnosticStatus>("machine/diagnostics", 1000);
+
+		int fault_code = 2;
+		diagnostic_msgs::DiagnosticStatus fault_msg;
+		fault_msg.level = 2;
+		fault_msg.name = "Roboteq: " + name_;
+		fault_msg.message = Fault_Desc[fault_code - 1];
+		diagnostic_msgs::KeyValue temp;
+    temp.key = "Fault Code";
+    temp.value = std::to_string(fault_code);
+    fault_msg.values.push_back(temp);
+
 		ser.write(ss0.str());
 		ser.write(ss1.str());
 		ser.write(ss2.str());
@@ -203,7 +251,7 @@ private:
 
 		ser.flush();
 		int count = 0;
-		read_publisher = nh.advertise<std_msgs::String>("read", 1000);
+
 		sleep(2);
 		ros::Rate loop_rate(5);
 		while (ros::ok())
@@ -264,6 +312,13 @@ private:
 						}
 
 						publisherVecH[i].publish(Q1);
+
+						// Check if fault flag; and send to diagnostics
+						if (i == fault_iter) {
+							diagnostic_msgs::DiagnosticStatus fault_msg;
+							fault_msg.level = 2;
+							fault_msg.name = "Fault: " + name_;
+						}
 					}
 				}
 			}

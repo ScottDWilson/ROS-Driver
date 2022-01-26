@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(roboteq_motor_controller_driver)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   tf
   message_generation
+  diagnostic_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -109,7 +110,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES roboteq_motor_controller_driver
-  CATKIN_DEPENDS roscpp serial std_msgs message_runtime
+  CATKIN_DEPENDS roscpp serial std_msgs message_runtime diagnostic_msgs
 #  DEPENDS system_lib
 )
 
@@ -208,7 +209,7 @@ target_link_libraries(diff_odom
 
 
 
- 
+
 
 #############
 ## Install ##

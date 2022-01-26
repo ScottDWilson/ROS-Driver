@@ -6,6 +6,9 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 
+#include <stdlib.h>
+#include <stdio.h>
+
 //! ROS standard msgs
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/Vector3Stamped.h>
@@ -37,16 +40,17 @@ namespace roboteq{
 
 class Driver
 {
-public: 
+public:
 	//Driver(ros::NodeHandle& nh);
 	//Driver();
 	//~Driver();
 	ros::Subscriber cmd_vel_sub;
 	ros::Publisher read_publisher;
-	
+	ros::Publisher diagnostic_pub;
+
 	ros::ServiceServer configsrv;
 	ros::ServiceServer commandsrv;
-	ros::ServiceServer maintenancesrv;	
+	ros::ServiceServer maintenancesrv;
 	//ros::ServiceClient configsrv_client;
 	//void diff_drive(int speed1, int speed2, float wheel_rad, float wheel_dist, int encoder_coef);
 	//void cmd_vel_callback(sensor_msgs::Joy::ConstPtr& msg);
@@ -56,36 +60,36 @@ public:
 	void roboteq_publisher();
 	void cmd_vel_callback(const geometry_msgs::Twist& msg);
 	//void initSub();
-	
-	
+
+
 	int channel_number_1;
 	int channel_number_2;
 	int frequencyH;
 	int frequencyL;
 	int frequencyG;
-	
-	
-	
-	
+
+
+
+
 	void roboteq_services();
 	bool configservice(roboteq_motor_controller_driver::config_srv::Request& req,     	roboteq_motor_controller_driver::config_srv::Response& res);
-	
+
 	bool commandservice(roboteq_motor_controller_driver::command_srv::Request& req,     	roboteq_motor_controller_driver::command_srv::Response& res);
-	
+
 	bool maintenanceservice(roboteq_motor_controller_driver::maintenance_srv::Request& req,     	roboteq_motor_controller_driver::maintenance_srv::Response& res);
-	
-	
+
+
 private:
 	int baud_rate;
 	std::string port;
 	std::string firmware;
 	int channel;
-	
-	
-geometry_msgs::TransformStamped tf_msg;
-tf::TransformBroadcaster odom_broadcaster;
-nav_msgs::Odometry odom_msg;
-    nav_msgs::Odometry odom;
+
+
+	geometry_msgs::TransformStamped tf_msg;
+	tf::TransformBroadcaster odom_broadcaster;
+	nav_msgs::Odometry odom_msg;
+  nav_msgs::Odometry odom;
 
 	enum fault_flag
 	{
@@ -99,9 +103,8 @@ nav_msgs::Odometry odom_msg;
 	MOSFET_FAILURE = 64,
 	STARTUP_CONFIG_FAULT = 128,
 	};
-	
-		
-};	
-}	
+
+
+};
+}
 #endif // ROBOTEQ_MOTOR_CONTROLLER_DRIVER_MAIN_H
-	
